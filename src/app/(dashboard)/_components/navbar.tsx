@@ -7,6 +7,7 @@ import {
 } from "@clerk/nextjs";
 import { SearchInput } from "./search-input";
 import { Invitemembers } from "./invite-member";
+import { CreateBoard } from "./board/create-board";
 
 export const Navbar = () => {
   const { organization } = useOrganization();
@@ -15,6 +16,8 @@ export const Navbar = () => {
       <div className="hidden lg:flex lg:flex-1  ">
         <SearchInput />
       </div>
+      <CreateBoard />
+
       <div className="block lg:hidden flex-1">
         <OrganizationSwitcher
           hidePersonal
