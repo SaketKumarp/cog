@@ -37,4 +37,16 @@ export const create = mutation({
   },
 });
 
-// ctx will have access to convex database
+// ctx (context)will have access to convex database
+
+export const deleteBoard = mutation({
+  args: {
+    id: v.id("boards"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new Error("unauthorized");
+
+    await ctx.db.delete(args.id);
+  },
+});
