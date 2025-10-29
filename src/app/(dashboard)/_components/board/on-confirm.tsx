@@ -6,6 +6,8 @@ import {
   AlertDialogTitle,
   AlertDialogContent,
   AlertDialogAction,
+  AlertDialogFooter,
+  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 
 interface useConfirmProps {
@@ -31,14 +33,17 @@ export const ConfirmModal = ({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogAction
-          disabled={disabled}
-          onClick={() => {
-            onConfirm();
-          }}
-        >
-          Confirm
-        </AlertDialogAction>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={disabled}
+            onClick={() => {
+              onConfirm();
+            }}
+          >
+            Confirm
+          </AlertDialogAction>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );

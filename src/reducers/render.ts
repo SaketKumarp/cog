@@ -1,33 +1,40 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Id } from "../../convex/_generated/dataModel";
 
 interface RenderState {
-  open: boolean;
+  isOpen: boolean;
   pending: boolean;
   auth: boolean;
   render: string;
   toggle: boolean;
+  boardId?: Id<"boards">;
 }
 
 const initialState: RenderState = {
-  open: true,
+  isOpen: false,
   pending: true,
   auth: true,
   render: "",
   toggle: false,
+  boardId: undefined,
 };
 
 const renderSlice = createSlice({
   name: "render",
   initialState,
   reducers: {
-    authStatus: (state, action: PayloadAction<boolean>) => {
-      state.auth = action.payload;
-    },
-    toggleStatus: (state, action: PayloadAction<boolean>) => {
-      state.toggle = action.payload;
+    modalStatus: (
+      state,
+      action: PayloadAction<{
+        isOpen: boolean;
+        boardId: Id<"boards"> | undefined;
+      }>
+    ) => {
+      state.isOpen = action.payload.isOpen;
+      state.boardId = action.payload.boardId;
     },
   },
 });
 
-export const { authStatus, toggleStatus } = renderSlice.actions;
+export const { modalStatus } = renderSlice.actions;
 export default renderSlice.reducer;

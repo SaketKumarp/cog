@@ -8,12 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "./ui/dropdown-menu";
-import { Link2 } from "lucide-react";
+import { Link2, Pencil, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { useDelete } from "@/hooks/use-DeleteBoard";
 import { Id } from "../../convex/_generated/dataModel";
 import { ConfirmModal } from "@/app/(dashboard)/_components/board/on-confirm";
 import { Button } from "./ui/button";
+import { modalStatus } from "@/reducers/render";
+import { useDispatch } from "react-redux";
 
 type requestType = { id: Id<"boards"> };
 
@@ -31,6 +33,8 @@ export const Actions = ({
   sideoffset,
   boardId,
 }: ActionProps) => {
+  const dispatch = useDispatch();
+
   const handleCopy = () => {
     navigator.clipboard
       .writeText(`${window.location.origin}/board/${boardId}`)
@@ -39,11 +43,13 @@ export const Actions = ({
   };
 
   const { mutate, pending } = useDelete();
-
+  const hanldeEdit = () => {
+    dispatch(modalStatus({ isOpen: true, boardId: boardId.id }));
+  };
   const handleDelete = () => {
     mutate(boardId, {
       onSuccess: () => {
-        toast.success("board deleted");
+        toast.success("board deleted !");
       },
       onError: () => {
         toast.error("failed to delete board");
@@ -60,18 +66,28 @@ export const Actions = ({
         onClick={(e) => e.stopPropagation()}
         className="w-60"
       >
-        <DropdownMenuItem className="p-4 cursor-pointer" onClick={handleCopy}>
+        <DropdownMenuItem onClick={handleCopy}>
           <Link2 className="h-4 w-4 mr-2" />
           Copy Board Link
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem className="p-4 cursor-pointer" onClick={hanldeEdit}>
+          <Pencil className="h-4 w-4 mr-2" />
+          Edit This Board
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+
         <ConfirmModal
-          description="are u sure"
-          title="delete"
+          description="Are You Sure You Want To Delete The Board"
+          title="Delete"
           disabled={pending}
           onConfirm={handleDelete}
         >
-          <Button className="p-3 cursor-pointer text-sm w-full justify-start font-normal">
+          <Button
+            className="p-3 cursor-pointer text-sm w-full justify-start font-normal"
+            variant={"ghost"}
+          >
+            <Trash2Icon className="h-4 w-4 mr-2" />
             Delete
           </Button>
         </ConfirmModal>
