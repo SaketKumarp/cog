@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as audio from "../audio.js";
 import type * as board from "../board.js";
 import type * as boards from "../boards.js";
 
@@ -26,6 +27,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  audio: typeof audio;
   board: typeof board;
   boards: typeof boards;
 }>;
