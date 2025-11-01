@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { Star } from "lucide-react";
-import { title } from "process";
 
 interface FooterProps {
   isfavorite: boolean;
@@ -13,6 +12,7 @@ interface FooterProps {
 
 export const Footer = ({
   isfavorite,
+  title,
   onClick,
   createdatLabel,
   disabled,

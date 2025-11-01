@@ -10,6 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Actions } from "@/components/actions";
 import { MoreHorizontal } from "lucide-react";
 import { Id } from "../../../../../convex/_generated/dataModel";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { toast } from "sonner";
+import { useApiMutationV2 } from "@/hooks/use-api-mutation2";
 
 type responseType = Id<"boards">;
 interface BoardCardProps {
@@ -31,11 +34,39 @@ export const BoardCard = ({
   createAt,
   isfavorite,
 }: BoardCardProps) => {
-  const { userId } = useAuth();
+  const { mutate: favorite, loading: PendingFavorite } = useApiMutation();
+  const { mutate: unfavorite, loading: pendingUnfavorite } = useApiMutationV2();
+
+  const { userId, orgId } = useAuth();
   const authorLabel = userId === authorId ? "You" : authorname;
   const createdatLabel = formatDistanceToNow(createAt, {
     addSuffix: true,
   });
+
+  const toggleFavorite = () => {
+    if (!orgId) return;
+
+    if (isfavorite) {
+      unfavorite(
+        { boardId, orgId },
+        {
+          onError: () => {
+            toast.error("failed to make as unfavorites ");
+          },
+        }
+      );
+    } else {
+      favorite(
+        { boardId, orgId },
+        {
+          onError: () => {
+            toast.error("Error occurred while favoriting");
+          },
+        }
+      );
+    }
+  };
+
   return (
     <Link href={`/board/${boardId}`}>
       <div className="group aspect-100/127 border rounded-lg flex flex-col justify-between overflow-hidden">
@@ -53,8 +84,8 @@ export const BoardCard = ({
           title={title}
           authorLabel={authorLabel}
           createdatLabel={createdatLabel}
-          disabled={false}
-          onClick={() => {}}
+          disabled={pendingUnfavorite || PendingFavorite}
+          onClick={toggleFavorite}
         />
       </div>
     </Link>

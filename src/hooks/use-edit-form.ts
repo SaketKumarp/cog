@@ -16,7 +16,7 @@ type Options = {
 };
 
 export const useEditForm = () => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const mutation = useMutation(api.board.updateBoard);
 

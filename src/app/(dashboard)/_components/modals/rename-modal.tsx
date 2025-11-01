@@ -23,7 +23,7 @@ export const RenameModal = () => {
   const dispatch = useDispatch();
   const open = useSelector((state: RootState) => state.render.isOpen);
   const id = useSelector((state: RootState) => state.render.boardId);
-  const { mutate } = useEditForm();
+  const { mutate, loading } = useEditForm();
   const [title, setTitle] = useState("");
 
   const onClose = () =>
@@ -37,6 +37,7 @@ export const RenameModal = () => {
       return;
     }
 
+    // in case of undefined return error as in redux state initial value is undefined
     if (!id) {
       toast.error("Board ID missing — cannot edit");
       return;
@@ -71,23 +72,24 @@ export const RenameModal = () => {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
             maxLength={60}
             placeholder="Enter new board title"
+            disabled={loading}
           />
 
           <DialogFooter className="mt-4">
             <DialogClose asChild>
-              <Button type="button" variant="ghost">
+              <Button type="button" variant="outline">
                 Close
               </Button>
             </DialogClose>
 
-            <Button type="submit" variant="default">
+            <Button type="submit" variant="default" disabled={loading}>
               Edit
             </Button>
           </DialogFooter>
