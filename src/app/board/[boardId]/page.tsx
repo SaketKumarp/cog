@@ -1,4 +1,9 @@
+"use client";
+
 import { AudioUploader } from "@/components/audio/audioDrag";
+import { Button } from "@/components/ui/button";
+import { getEmbeddings } from "@/hooks/use-trans";
+import { toast } from "sonner";
 
 interface PageProps {
   params: {
@@ -6,8 +11,25 @@ interface PageProps {
   };
 }
 
-export default async function BoardPage({ params }: PageProps) {
+export default function BoardPage({ params }: PageProps) {
   const { boardId } = params;
+
+  const handleClick = async () => {
+    try {
+      const a = await getEmbeddings("hello world");
+      console.log(a);
+      console.log(a.length);
+
+      toast.success("ok", {
+        action: {
+          label: "embeddings",
+          onClick: () => a.map((ind) => console.log(ind)),
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="p-8">
@@ -15,8 +37,8 @@ export default async function BoardPage({ params }: PageProps) {
         Board ID: <span className="text-[#1abc9c]">{boardId}</span>
       </h1>
 
-      {/* Attach uploader for this board */}
       <AudioUploader boardId={boardId} />
+      <Button onClick={handleClick}>Embeddings</Button>
     </div>
   );
 }

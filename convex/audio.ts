@@ -1,6 +1,5 @@
-import { mutation, action, query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
 
 export const uploadAudio = mutation({
   args: {
@@ -8,17 +7,20 @@ export const uploadAudio = mutation({
     boardId: v.id("boards"),
     orgId: v.string(),
     userId: v.string(),
+    title: v.optional(v.string()),
+    duration: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const fileUrl = await ctx.storage.getUrl(args.storageId);
-
+    if (!fileUrl) throw new Error("file does not exist");
     const audioId = await ctx.db.insert("audios", {
       boardId: args.boardId,
       orgId: args.orgId,
       userId: args.userId,
       fileUrl,
       transcript: "",
-      duration: undefined,
+      title: args.title ?? "Untitled",
+      duration: args.duration,
       createdAt: Date.now(),
     });
 
@@ -26,113 +28,75 @@ export const uploadAudio = mutation({
   },
 });
 
-export const transcribeAudio = action({
+//back-end for saving transcript
+
+export const saveTranscript = mutation({
   args: {
-    audioUrl: v.string(),
-    audioId: v.id("audios"),
-    modelPath: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const transcript = `Simulated transcript from ${args.audioUrl}`;
+    boardId: v.string(),
 
-    await ctx.runMutation(api.audio.updateTranscript, {
-      audioId: args.audioId,
-      transcript,
-    });
-
-    return transcript;
-  },
-});
-
-export const updateTranscript = mutation({
-  args: { audioId: v.id("audios"), transcript: v.string() },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.audioId, { transcript: args.transcript });
-  },
-});
-
-// i will change it based on the model i will be using
-export const generateEmbeddings = action({
-  args: {
-    audioId: v.id("audios"),
-    boardId: v.id("boards"),
-    orgId: v.string(),
-    userId: v.string(),
     transcript: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("Missing OPENAI_API_KEY");
-
-    const response = await fetch("https://api.openai.com/v1/embeddings", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        input: args.transcript,
-        model: "text-embedding-3-small",
-      }),
-    });
-
-    const json = await response.json();
-    const embedding = json.data?.[0]?.embedding;
-
-    if (!embedding) throw new Error("Failed to create embedding");
-
-    await ctx.runMutation(api.audio.storeEmbedding, {
-      audioId: args.audioId,
-      boardId: args.boardId,
-      orgId: args.orgId,
-      userId: args.userId,
-      embedding,
-      model: "text-embedding-3-small",
-    });
-
-    return embedding;
-  },
-});
-
-export const storeEmbedding = mutation({
-  args: {
-    audioId: v.id("audios"),
-    boardId: v.id("boards"),
+    embeddings: v.array(v.float64()),
     orgId: v.string(),
-    userId: v.string(),
-    embedding: v.array(v.float64()),
-    model: v.string(),
   },
+
   handler: async (ctx, args) => {
-    await ctx.db.insert("embeddings", {
-      audioId: args.audioId,
-      boardId: args.boardId,
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new Error("unauthorized");
+    const userId = user.subject;
+    const transcriptId = await ctx.db.insert("transcript", {
       orgId: args.orgId,
-      userId: args.userId,
-      embedding: args.embedding,
-      model: args.model,
-      createdAt: Date.now(),
+      userId: userId,
+      transcript: args.transcript,
+      embeddings: args.embeddings,
+      boardId: args.boardId,
     });
+
+    return transcriptId;
   },
 });
 
-export const getBoardAudios = query({
-  args: { boardId: v.id("boards") },
+// fucn for how similar two embedings are
+const cosineSimilarity = (a: number[], b: number[]) => {
+  const dot = a.reduce((sum, val, i) => sum + val * b[i], 0);
+  const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+  const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+  return dot / (magA * magB);
+};
+// search relavant transcript ... not sure but i will pass the context from here
+export const findRelevantTranscripts = query({
+  args: {
+    orgId: v.string(),
+    boardId: v.string(),
+    queryEmbedding: v.array(v.float64()),
+    topK: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("audios")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .order("desc")
+    const user = await ctx.auth.getUserIdentity();
+    if (!user) throw new Error("Invalid User");
+
+    const transcripts = await ctx.db
+      .query("transcript")
+      .withIndex("by_boardId", (q) => q.eq("boardId", args.boardId))
       .collect();
+
+    const scored = transcripts.map((t) => ({
+      ...t,
+      score: cosineSimilarity(args.queryEmbedding, t.embeddings),
+    }));
+
+    scored.sort((a, b) => b.score - a.score);
+    const context = scored.slice(0, args.topK ?? 3);
+    return context;
   },
 });
 
-export const getEmbeddingsByBoard = query({
-  args: { boardId: v.id("boards") },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("embeddings")
-      .withIndex("by_board", (q) => q.eq("boardId", args.boardId))
-      .collect();
-  },
-});
+// probably i m planning to save multiple trnascript .. i have to figure out how i wll store these into multiple chunks
+
+export function chunkTranscript(text: string, chunkSize = 500): string[] {
+  const words = text.split(/\s+/);
+  const chunks = [];
+  for (let i = 0; i < words.length; i += chunkSize) {
+    chunks.push(words.slice(i, i + chunkSize).join(" "));
+  }
+  return chunks;
+}

@@ -1,8 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
+// right now i am not breaking transcripts into smaller chunks may be next time..
+// first i will see if it works on smaller audio files or not
 export default defineSchema({
-  // --- Existing tables ---
   boards: defineTable({
     title: v.string(),
     orgId: v.string(),
@@ -33,23 +33,34 @@ export default defineSchema({
     fileUrl: v.string(),
     transcript: v.string(),
     duration: v.optional(v.number()),
+    title: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_board", ["boardId"])
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"]),
 
-  embeddings: defineTable({
-    audioId: v.id("audios"),
-    boardId: v.id("boards"),
+  queries: defineTable({
+    boardId: v.string(),
     orgId: v.string(),
     userId: v.string(),
-    embedding: v.array(v.float64()), // vector embedding (e.g. 1536 floats)
-    model: v.string(), // which embedding model was used (e.g. "text-embedding-3-large")
+    query: v.string(),
+
+    response: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_audio", ["audioId"])
+    .index("by_user", ["userId"])
     .index("by_board", ["boardId"])
-    .index("by_org", ["orgId"])
-    .index("by_user", ["userId"]),
+    .index("by_org", ["orgId"]),
+  // table for transcript ... i will also store embeddings
+  transcript: defineTable({
+    boardId: v.string(),
+    orgId: v.string(),
+    userId: v.string(),
+    transcript: v.string(),
+    embeddings: v.array(v.float64()),
+  })
+    .index("by_boardId", ["boardId"])
+    .index("by_user_id", ["userId"])
+    .index("by_bord_org", ["boardId", "orgId"]),
 });

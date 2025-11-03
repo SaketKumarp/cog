@@ -37,7 +37,7 @@ export const AudioUploader = ({ boardId }: AudioUploaderProps) => {
     setLoading(true);
     const formData = new FormData();
     formData.append("audio", file);
-    formData.append("boardId", boardId); // so backend knows which board it belongs to
+    formData.append("boardId", boardId);
 
     try {
       const res = await fetch("/api/upload-audio", {
