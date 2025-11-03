@@ -33,22 +33,21 @@ export const uploadAudio = mutation({
 export const saveTranscript = mutation({
   args: {
     boardId: v.string(),
-
     transcript: v.string(),
     embeddings: v.array(v.float64()),
     orgId: v.string(),
   },
-
   handler: async (ctx, args) => {
     const user = await ctx.auth.getUserIdentity();
     if (!user) throw new Error("unauthorized");
-    const userId = user.subject;
+
     const transcriptId = await ctx.db.insert("transcript", {
+      boardId: args.boardId,
       orgId: args.orgId,
-      userId: userId,
+      userId: user.subject,
       transcript: args.transcript,
       embeddings: args.embeddings,
-      boardId: args.boardId,
+      createdAt: Date.now(),
     });
 
     return transcriptId;
@@ -91,12 +90,3 @@ export const findRelevantTranscripts = query({
 });
 
 // probably i m planning to save multiple trnascript .. i have to figure out how i wll store these into multiple chunks
-
-export function chunkTranscript(text: string, chunkSize = 500): string[] {
-  const words = text.split(/\s+/);
-  const chunks = [];
-  for (let i = 0; i < words.length; i += chunkSize) {
-    chunks.push(words.slice(i, i + chunkSize).join(" "));
-  }
-  return chunks;
-}

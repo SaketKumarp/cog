@@ -59,6 +59,7 @@ export default defineSchema({
     userId: v.string(),
     transcript: v.string(),
     embeddings: v.array(v.float64()),
+    createdAt: v.number(),
   })
     .index("by_boardId", ["boardId"])
     .index("by_user_id", ["userId"])
