@@ -1,3 +1,4 @@
+import { cosineSimilarity } from "@/func/use-trans";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -55,12 +56,7 @@ export const saveTranscript = mutation({
 });
 
 // fucn for how similar two embedings are
-const cosineSimilarity = (a: number[], b: number[]) => {
-  const dot = a.reduce((sum, val, i) => sum + val * b[i], 0);
-  const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-  const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-  return dot / (magA * magB);
-};
+
 // search relavant transcript ... not sure but i will pass the context from here
 export const findRelevantTranscripts = query({
   args: {

@@ -15,7 +15,7 @@ type Options = {
 };
 
 export const useCreateBoard = () => {
-  const [data, setdata] = useState<responseType | null>(null);
+  const [data, setdata] = useState<responseType>();
   const [laoding, setLoading] = useState<boolean | undefined>(undefined);
 
   const create = useMutation(api.board.create);
@@ -24,7 +24,7 @@ export const useCreateBoard = () => {
       try {
         setLoading(true);
         const response = await create(values);
-
+        if (!response) throw new Error("failed to fetch");
         setdata(response);
 
         setLoading(false);
