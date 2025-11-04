@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react"; // 👈 import React explicitly
 import { AudioUploader } from "@/components/audio/audioDrag";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ai } from "@/func/use-gemini";
 import { chunkTranscript, getEmbeddings } from "@/func/use-trans";
 import { useFindRelevantTranscripts } from "@/hooks/use-get-transcript";
@@ -18,14 +19,17 @@ import { useOrganization } from "@clerk/nextjs";
 import { toast } from "sonner";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     boardId: string;
-  };
+  }>;
 }
 
 export default function BoardPage({ params }: PageProps) {
+  const { boardId } = React.use(params);
+
   const [output, setOutput] = useState<string | undefined>();
-  const { boardId } = params;
+  const [query, setQuery] = useState<string>("");
+  const [loadingGemini, setLoadingGemini] = useState(false);
   const { organization } = useOrganization();
 
   const { mutate, loading: saving } = useSaveTranscript();
@@ -39,10 +43,9 @@ export default function BoardPage({ params }: PageProps) {
     try {
       if (!organization) return toast.error("No organization found!");
 
-      const transcript =
-        "The history of Sanatan Dharma stretches from the ancient Vedic period, with its roots in the Vedas, to its evolution through different philosophies, the emergence of the Puranas, and the Bhakti movement.";
+      const transcript = `my name is saket haha`;
 
-      const chunks = chunkTranscript(transcript, 20);
+      const chunks = chunkTranscript(transcript, 10);
       console.log("Chunks:", chunks);
 
       for (let i = 0; i < chunks.length; i++) {
@@ -64,6 +67,7 @@ export default function BoardPage({ params }: PageProps) {
           }
         );
       }
+      console.log();
 
       toast.success("All chunks processed and saved!");
     } catch (e) {
@@ -71,10 +75,11 @@ export default function BoardPage({ params }: PageProps) {
       toast.error("Failed to process transcript.");
     }
   };
-  const query = `history of hinduism`;
+
   const handleFetchRelevant = async () => {
     try {
       if (!organization) return toast.error("No organization found!");
+      if (!query.trim()) return toast.error("Enter a query first!");
 
       const queryEmbeddings = await getEmbeddings(query);
 
@@ -85,6 +90,14 @@ export default function BoardPage({ params }: PageProps) {
         topK: 2,
       });
 
+      results.map((result) =>
+        console.log(
+          result.boardId,
+          result._creationTime,
+          result.score,
+          result.userId
+        )
+      );
       toast.success("Fetched relevant transcripts!");
     } catch (e) {
       console.error(e);
@@ -95,19 +108,24 @@ export default function BoardPage({ params }: PageProps) {
   const handleGemini = async () => {
     try {
       if (!results || results.length === 0) {
-        return toast.error("no response from db!");
+        return toast.error("No relevant transcripts fetched yet!");
       }
 
-      const context = results.map((r) => r.transcript).join("");
-      const prompt = ` You are a helpful AI that analyzes and summarizes audio transcripts.
-      Use the provided context to answer the user's question accurately.
-      If the answer is not in the context, say "I don't have enough information
-      
-      CONTEXT : ${context}
+      setLoadingGemini(true);
 
-      question : ${query}
+      const context = results.map((r) => r.transcript).join(" ");
+      const prompt = `
+        You are a helpful AI that analyzes and summarizes audio transcripts.
+        Use the provided context as much as possible, but if the context doesn't have the answer,
+        use your own general knowledge to respond helpfully.
 
+        CONTEXT:
+        ${context}
+
+        QUESTION:
+        ${query}
       `;
+
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -118,11 +136,19 @@ export default function BoardPage({ params }: PageProps) {
       setOutput(response.text);
     } catch (err) {
       console.error("Gemini API error:", err);
+      toast.error("Error calling Gemini API");
+    } finally {
+      setLoadingGemini(false);
     }
   };
 
+  const handleQuery = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setQuery(e.target.value);
+  };
+
   return (
-    <div className="p-8">
+    <div className="p-8 space-y-8">
       <h1 className="text-2xl font-bold text-gray-800">
         Board ID: <span className="text-[#1abc9c]">{boardId}</span>
       </h1>
@@ -133,19 +159,32 @@ export default function BoardPage({ params }: PageProps) {
         <Button onClick={handleSaveTranscript} disabled={saving}>
           {saving ? "Saving..." : "Generate & Save Embeddings"}
         </Button>
-
-        <Button onClick={handleFetchRelevant} disabled={pendingFetch}>
-          {pendingFetch ? "Fetching..." : "Find Relevant Transcripts"}
-        </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Context that will be passed to LLM</CardTitle>
+          <CardTitle>Ask or Search Transcripts</CardTitle>
+        </CardHeader>
+        <CardContent className="flex gap-4 items-center">
+          <Input
+            type="text"
+            placeholder="Ask something about your transcripts..."
+            value={query}
+            onChange={handleQuery}
+          />
+          <Button onClick={handleFetchRelevant} disabled={pendingFetch}>
+            {pendingFetch ? "Fetching..." : "Find Relevant Context"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Context from Database</CardTitle>
         </CardHeader>
         <CardContent>
           {results.length === 0 && (
-            <p className="text-gray-500">No results yet.</p>
+            <p className="text-gray-500">No context fetched yet.</p>
           )}
           {results.map((con) => (
             <p key={con._id} className="text-sm py-1">
@@ -154,24 +193,33 @@ export default function BoardPage({ params }: PageProps) {
           ))}
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
-          <CardTitle>Ask Gemini Your Query</CardTitle>
+          <CardTitle>Gemini Response</CardTitle>
         </CardHeader>
         <CardContent>
-          {output}
-
-          <CardFooter>
-            <Button
-              onClick={handleGemini}
-              variant={"secondary"}
-              size={"lg"}
-              className="cursor-pointer hover:bg-amber-50"
-            >
-              Ask Gemini
-            </Button>
-          </CardFooter>
+          {output ? (
+            <p className="whitespace-pre-wrap">{output}</p>
+          ) : (
+            <p className="text-gray-500">
+              {loadingGemini
+                ? "Getting your answers ready........."
+                : "Ask Gemini your query"}
+            </p>
+          )}
         </CardContent>
+        <CardFooter>
+          <Button
+            onClick={handleGemini}
+            variant="secondary"
+            size="lg"
+            className="cursor-pointer hover:bg-amber-50"
+            disabled={loadingGemini}
+          >
+            Ask Gemini
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
