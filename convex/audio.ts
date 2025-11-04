@@ -71,8 +71,11 @@ export const findRelevantTranscripts = query({
 
     const transcripts = await ctx.db
       .query("transcript")
-      .withIndex("by_boardId", (q) => q.eq("boardId", args.boardId))
+      .withIndex("by_bord_org", (q) =>
+        q.eq("boardId", args.boardId).eq("orgId", args.orgId)
+      )
       .collect();
+    if (transcripts.length === 0) return [];
 
     const scored = transcripts.map((t) => ({
       ...t,

@@ -41,7 +41,7 @@ export const BoardList = ({ query, orgId }: BoardListProps) => {
     );
   }
 
-  if (!data?.length && !query.favorites) {
+  if (!data?.length && query.favorites) {
     return (
       <div className="flex flex-col justify-center items-center">
         <Image alt="query" width={500} height={500} src={"/favorite.svg"} />
@@ -49,6 +49,7 @@ export const BoardList = ({ query, orgId }: BoardListProps) => {
       </div>
     );
   }
+
   if (!data?.length) {
     return <EmptyBoard />;
   }
@@ -62,7 +63,7 @@ export const BoardList = ({ query, orgId }: BoardListProps) => {
         <NewBoardButton orgId={orgId} />
         {data.map((board) => (
           <BoardCard
-            isfavorite={false}
+            isfavorite={board.isFavorite}
             authorname={board.authorname}
             authorId={board.authorId}
             boardId={board._id}

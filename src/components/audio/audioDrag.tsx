@@ -46,6 +46,7 @@ export const AudioUploader = ({ boardId }: AudioUploaderProps) => {
       });
 
       const data = await res.json();
+      console.log(data);
       setTranscript(data.text || "No transcription returned");
     } catch (error) {
       console.error("Upload failed:", error);

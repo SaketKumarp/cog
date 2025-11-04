@@ -1,8 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { AudioUploader } from "@/components/audio/audioDrag";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ai } from "@/func/use-gemini";
 import { chunkTranscript, getEmbeddings } from "@/func/use-trans";
 import { useFindRelevantTranscripts } from "@/hooks/use-get-transcript";
 import { useSaveTranscript } from "@/hooks/use-save-trans";
@@ -16,6 +24,7 @@ interface PageProps {
 }
 
 export default function BoardPage({ params }: PageProps) {
+  const [output, setOutput] = useState<string | undefined>();
   const { boardId } = params;
   const { organization } = useOrganization();
 
@@ -24,23 +33,40 @@ export default function BoardPage({ params }: PageProps) {
     results,
     fetchRelevant,
     loading: pendingFetch,
-  } = useFindRelevantTranscripts(); // useQuery-like hook
+  } = useFindRelevantTranscripts();
+
+  const handleGemini = async () => {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: "Hello there" }] }],
+        config: {
+          systemInstruction: "You are a cat. Your name is Neko.",
+        },
+      });
+
+      console.log("Full response:", response);
+      console.log("Model output:", response.text);
+      setOutput(response.text);
+    } catch (err) {
+      console.error("Gemini API error:", err);
+    }
+  };
 
   const handleSaveTranscript = async () => {
     try {
       if (!organization) return toast.error("No organization found!");
 
-      const transcript = `
-The British brought cricket to India in the early 1700s, with the first cricket match played in 1721. 
-It was played and adopted by Kolis of Gujarat... (rest of your text)
-`;
+      const transcript =
+        "The history of Sanatan Dharma stretches from the ancient Vedic period, with its roots in the Vedas, to its evolution through different philosophies, the emergence of the Puranas, and the Bhakti movement.";
 
-      const chunks = chunkTranscript(transcript, 100);
+      const chunks = chunkTranscript(transcript, 20);
       console.log("Chunks:", chunks);
 
       for (let i = 0; i < chunks.length; i++) {
         const textChunk = chunks[i];
         const embeddings = await getEmbeddings(textChunk);
+        console.log(embeddings);
 
         await mutate(
           {
@@ -68,7 +94,7 @@ It was played and adopted by Kolis of Gujarat... (rest of your text)
     try {
       if (!organization) return toast.error("No organization found!");
 
-      const query = `who brought cricket in india?`;
+      const query = `history of hinduism`;
       const queryEmbeddings = await getEmbeddings(query);
 
       await fetchRelevant({
@@ -105,7 +131,7 @@ It was played and adopted by Kolis of Gujarat... (rest of your text)
 
       <Card>
         <CardHeader>
-          <CardTitle>Context passed to LLM</CardTitle>
+          <CardTitle>Context that will be passed to LLM</CardTitle>
         </CardHeader>
         <CardContent>
           {results.length === 0 && (
@@ -116,6 +142,25 @@ It was played and adopted by Kolis of Gujarat... (rest of your text)
               {con.transcript}
             </p>
           ))}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Context that will be passed to LLM</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {output}
+
+          <CardFooter>
+            <Button
+              onClick={handleGemini}
+              variant={"secondary"}
+              size={"lg"}
+              className="cursor-pointer hover:bg-amber-50"
+            >
+              Ask Gemini
+            </Button>
+          </CardFooter>
         </CardContent>
       </Card>
     </div>

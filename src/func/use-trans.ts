@@ -16,16 +16,24 @@ export const getEmbeddings = async (text: string): Promise<number[]> => {
 
 // we well pass the text from audio to text model here not the text chunk actually
 
-export function chunkTranscript(text: string, chunkSize: number): string[] {
-  const words = text.split(/\s+/);
-  const chunks = [];
-  for (let i = 0; i < words.length; i += chunkSize) {
-    chunks.push(words.slice(i, i + chunkSize).join(" "));
+export function chunkTranscript(text: string, maxTokens: number) {
+  const sentences = text.split(/(?<=[.?!])\s+/);
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const sentence of sentences) {
+    if ((current + sentence).split(" ").length > maxTokens) {
+      chunks.push(current.trim());
+      current = sentence;
+    } else {
+      current += " " + sentence;
+    }
   }
+  if (current.trim()) chunks.push(current.trim());
   return chunks;
 }
 
- export const cosineSimilarity = (a: number[], b: number[]) => {
+export const cosineSimilarity = (a: number[], b: number[]) => {
   const dot = a.reduce((sum, val, i) => sum + val * b[i], 0);
   const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
   const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
