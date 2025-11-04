@@ -35,24 +35,6 @@ export default function BoardPage({ params }: PageProps) {
     loading: pendingFetch,
   } = useFindRelevantTranscripts();
 
-  const handleGemini = async () => {
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [{ role: "user", parts: [{ text: "Hello there" }] }],
-        config: {
-          systemInstruction: "You are a cat. Your name is Neko.",
-        },
-      });
-
-      console.log("Full response:", response);
-      console.log("Model output:", response.text);
-      setOutput(response.text);
-    } catch (err) {
-      console.error("Gemini API error:", err);
-    }
-  };
-
   const handleSaveTranscript = async () => {
     try {
       if (!organization) return toast.error("No organization found!");
@@ -89,12 +71,11 @@ export default function BoardPage({ params }: PageProps) {
       toast.error("Failed to process transcript.");
     }
   };
-
+  const query = `history of hinduism`;
   const handleFetchRelevant = async () => {
     try {
       if (!organization) return toast.error("No organization found!");
 
-      const query = `history of hinduism`;
       const queryEmbeddings = await getEmbeddings(query);
 
       await fetchRelevant({
@@ -108,6 +89,35 @@ export default function BoardPage({ params }: PageProps) {
     } catch (e) {
       console.error(e);
       toast.error("Failed to fetch relevant transcripts.");
+    }
+  };
+
+  const handleGemini = async () => {
+    try {
+      if (!results || results.length === 0) {
+        return toast.error("no response from db!");
+      }
+
+      const context = results.map((r) => r.transcript).join("");
+      const prompt = ` You are a helpful AI that analyzes and summarizes audio transcripts.
+      Use the provided context to answer the user's question accurately.
+      If the answer is not in the context, say "I don't have enough information
+      
+      CONTEXT : ${context}
+
+      question : ${query}
+
+      `;
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+
+      console.log("Full response:", response);
+      console.log("Model output:", response.text);
+      setOutput(response.text);
+    } catch (err) {
+      console.error("Gemini API error:", err);
     }
   };
 
@@ -146,7 +156,7 @@ export default function BoardPage({ params }: PageProps) {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Context that will be passed to LLM</CardTitle>
+          <CardTitle>Ask Gemini Your Query</CardTitle>
         </CardHeader>
         <CardContent>
           {output}
