@@ -6,6 +6,8 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { BoardCard } from "./board/board-card";
 import { NewBoardButton } from "./board/new-board-button";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/render";
 
 interface BoardListProps {
   query: {
@@ -16,8 +18,9 @@ interface BoardListProps {
 }
 
 export const BoardList = ({ query, orgId }: BoardListProps) => {
-  const data = useQuery(api.boards.getBoards, { orgId });
-  // i will be using redux for debounced value
+  const value = useSelector((state: RootState) => state.render.search);
+
+  const data = useQuery(api.boards.getBoards, { search: value, orgId });
 
   if (data === undefined) {
     return (

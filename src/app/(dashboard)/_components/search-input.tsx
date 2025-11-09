@@ -28,7 +28,7 @@ export const SearchInput = () => {
       { skipEmptyString: true, skipNull: true }
     );
 
-    dispatch(searchValue(debouncedValue)); // dispatched the value
+    dispatch(searchValue(debouncedValue)); // dispatched the value of the search
 
     router.push(url);
   }, [debouncedValue, router, dispatch]);
