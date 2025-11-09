@@ -2,17 +2,16 @@
 
 import { useCreateBoard } from "@/hooks/useCreateBoard";
 import { cn } from "@/lib/utils";
-
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
-interface NewBoardButtonPorps {
+interface NewBoardButtonProps {
   orgId: string;
   disabled?: boolean;
 }
 
-export const NewBoardButton = ({ orgId, disabled }: NewBoardButtonPorps) => {
-  const { laoding: Pending, mutate } = useCreateBoard();
+export const NewBoardButton = ({ orgId, disabled }: NewBoardButtonProps) => {
+  const { laoding: pending, mutate } = useCreateBoard();
 
   const handleClick = () => {
     mutate(
@@ -22,16 +21,14 @@ export const NewBoardButton = ({ orgId, disabled }: NewBoardButtonPorps) => {
       },
       {
         onSucces: (id) => {
-          toast.success("New Board Created", {
+          toast.success("New board created", {
             action: {
-              label: "undo",
+              label: "Undo",
               onClick: () => console.log(id),
             },
           });
         },
-        onError: () => {
-          toast.error("Failed to create the board!");
-        },
+        onError: () => toast.error("Failed to create the board!"),
       }
     );
   };
@@ -39,16 +36,15 @@ export const NewBoardButton = ({ orgId, disabled }: NewBoardButtonPorps) => {
   return (
     <button
       onClick={handleClick}
-      disabled={disabled}
+      disabled={disabled || pending}
       className={cn(
-        "col-span-1 aspect-100/127 bg-blue-600 rounded-lg hover:bg-blue-800 flex flex-col items-center justify-center y-6 ",
-        disabled ||
-          (Pending && "opacity-75 hover:bg-blue-800 cursor-not-allowed")
+        "w-240px h-[180px] rounded-md border border-gray-200 shadow-sm flex flex-col items-center justify-center transition-all duration-200 hover:shadow-md hover:-translate-y-2px",
+        "bg-[#1abc9c] hover:bg-[#16a085] text-white",
+        (disabled || pending) && "opacity-70 cursor-not-allowed"
       )}
     >
-      <div />
-      <Plus className="h-12 w-12 text-white stroke-1 " />
-      <p className="text-white text-sm font-light ">New Baord</p>
+      <Plus className="h-10 w-10 stroke-[1.5]" />
+      <p className="text-sm mt-2 font-medium">New Board</p>
     </button>
   );
 };

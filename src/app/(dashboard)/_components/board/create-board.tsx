@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useCreateBoard } from "@/hooks/useCreateBoard";
 import { useOrganization } from "@clerk/nextjs";
+import { Plus } from "lucide-react";
 
 import { toast } from "sonner";
 
@@ -37,11 +38,12 @@ export const CreateBoard = () => {
 
   return (
     <Button
-      variant={"destructive"}
+      variant={"secondary"}
       size={"lg"}
       onClick={handleClick}
       disabled={pending}
     >
+      <Plus />
       Create Baord
     </Button>
   );

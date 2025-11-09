@@ -25,21 +25,14 @@ export const BoardList = ({ query, orgId }: BoardListProps) => {
   if (data === undefined) {
     return (
       <div>
-        <h2 className="text-3xl">
-          {query?.favorites ? "favorite Boards" : "Normal Boards"}
+        <h2 className="text-2xl font-semibold">
+          {query?.favorites ? "Favorite Boards" : "Boards"}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-col-5 lg:grid-col-4 2xl:grid-col-6 gap-5 mt-8 pb-10  ">
-          <NewBoardButton orgId={orgId} disabled={true} />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
-          <BoardCard.Skeleton />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 pb-10">
+          <NewBoardButton orgId={orgId} disabled />
+          {[...Array(6)].map((_, i) => (
+            <BoardCard.Skeleton key={i} />
+          ))}
         </div>
       </div>
     );
@@ -48,8 +41,10 @@ export const BoardList = ({ query, orgId }: BoardListProps) => {
   if (!data?.length && query.favorites) {
     return (
       <div className="flex flex-col justify-center items-center">
-        <Image alt="query" width={500} height={500} src={"/favorite.svg"} />
-        <p className="mt-2 font-semibold text-2xl">No favorites here ! </p>
+        <Image alt="query" width={400} height={400} src={"/favorite.svg"} />
+        <p className="mt-3 font-semibold text-xl text-gray-700">
+          No favorites here!
+        </p>
       </div>
     );
   }
@@ -60,18 +55,19 @@ export const BoardList = ({ query, orgId }: BoardListProps) => {
 
   return (
     <div>
-      <h2 className="text-3xl">
-        {query?.favorites ? "favorite Boards" : "Normal Boards"}
+      <h2 className="text-2xl font-semibold">
+        {query?.favorites ? "Favorite Boards" : "Boards"}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-col-5 lg:grid-col-4 2xl:grid-col-6 gap-5 mt-8 pb-10  ">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 pb-10">
         <NewBoardButton orgId={orgId} />
         {data.map((board) => (
           <BoardCard
+            key={board._id}
             isfavorite={board.isFavorite}
             authorname={board.authorname}
             authorId={board.authorId}
             boardId={board._id}
-            key={board._id}
             createAt={board._creationTime}
             imageUrl={board.imageUrl}
             title={board.title}

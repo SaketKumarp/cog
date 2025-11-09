@@ -36,8 +36,9 @@ export const Actions = ({
   const dispatch = useDispatch();
 
   const handleCopy = () => {
+    console.log(boardId);
     navigator.clipboard
-      .writeText(`${window.location.origin}/board/${boardId}`)
+      .writeText(`${window.location.origin}/board/${boardId.id}`)
       .then(() => toast.success("link copied"))
       .catch(() => toast.error("Failed to copy link"));
   };
