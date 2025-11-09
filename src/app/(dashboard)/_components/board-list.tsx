@@ -17,6 +17,7 @@ interface BoardListProps {
 
 export const BoardList = ({ query, orgId }: BoardListProps) => {
   const data = useQuery(api.boards.getBoards, { orgId });
+  // i will be using redux for debounced value
 
   if (data === undefined) {
     return (

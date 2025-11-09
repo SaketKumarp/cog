@@ -45,6 +45,16 @@ export const deleteBoard = mutation({
     const user = await ctx.auth.getUserIdentity();
     if (!user) throw new Error("Unauthorized");
 
+    const userId = user.subject;
+    const existingFavorite = await ctx.db
+      .query("favorites")
+      .withIndex("by_user_board", (q) =>
+        q.eq("userId", userId).eq("boardId", args.id)
+      )
+      .unique();
+
+    if (existingFavorite) ctx.db.delete(existingFavorite._id);
+
     await ctx.db.delete(args.id);
   },
 });

@@ -5,7 +5,7 @@ interface RenderState {
   isOpen: boolean;
   pending: boolean;
   auth: boolean;
-  render: string;
+  search: string;
   toggle: boolean;
   boardId?: Id<"boards">;
 }
@@ -14,7 +14,7 @@ const initialState: RenderState = {
   isOpen: false,
   pending: true,
   auth: true,
-  render: "",
+  search: "",
   toggle: false,
   boardId: undefined,
 };
@@ -33,8 +33,12 @@ const renderSlice = createSlice({
       state.isOpen = action.payload.isOpen;
       state.boardId = action.payload.boardId;
     },
+
+    searchValue: (state, action) => {
+      state.search = action.payload;
+    }, // this is used to pass the search query for the baords
   },
 });
 
-export const { modalStatus } = renderSlice.actions;
+export const { modalStatus, searchValue } = renderSlice.actions;
 export default renderSlice.reducer;

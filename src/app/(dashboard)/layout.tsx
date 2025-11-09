@@ -1,7 +1,6 @@
 import { Orgsidebar } from "./_components/sidebar/Org-sidebar";
 import { SideBar } from "./_components/Sidebar";
 import { Navbar } from "./_components/navbar";
-import { Toaster } from "@/components/ui/sonner";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -17,7 +16,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex-1 h-full">
             <Navbar />
             {children}
-            <Toaster />
           </div>
         </div>
       </div>

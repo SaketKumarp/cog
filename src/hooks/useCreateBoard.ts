@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
-type responseType = Id<"boards">;
+type responseType = { _id: Id<"boards"> };
 type requestType = {
   title: string;
   orgId: string;

@@ -34,8 +34,8 @@ export const BoardCard = ({
   createAt,
   isfavorite,
 }: BoardCardProps) => {
-  const { mutate: favorite, loading: PendingFavorite } = useApiMutation();
-  const { mutate: unfavorite, loading: pendingUnfavorite } = useApiMutationV2();
+  const { mutate: favorite } = useApiMutation();
+  const { mutate: unfavorite } = useApiMutationV2();
 
   const { userId, orgId } = useAuth();
   const authorLabel = userId === authorId ? "You" : authorname;
@@ -84,8 +84,8 @@ export const BoardCard = ({
           title={title}
           authorLabel={authorLabel}
           createdatLabel={createdatLabel}
-          disabled={pendingUnfavorite || PendingFavorite}
           onClick={toggleFavorite}
+          disabled={false}
         />
       </div>
     </Link>
