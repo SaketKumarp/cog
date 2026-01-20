@@ -2,6 +2,7 @@ import { cosineSimilarity } from "@/func/use-trans";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// saving audio in db
 export const uploadAudio = mutation({
   args: {
     storageId: v.id("_storage"),
@@ -11,17 +12,20 @@ export const uploadAudio = mutation({
     title: v.optional(v.string()),
     duration: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
-    const fileUrl = await ctx.storage.getUrl(args.storageId);
+  handler: async (
+    ctx,
+    { storageId, boardId, orgId, userId, title, duration },
+  ) => {
+    const fileUrl = await ctx.storage.getUrl(storageId);
     if (!fileUrl) throw new Error("file does not exist");
     const audioId = await ctx.db.insert("audios", {
-      boardId: args.boardId,
-      orgId: args.orgId,
-      userId: args.userId,
+      boardId: boardId,
+      orgId: orgId,
+      userId: userId,
       fileUrl,
       transcript: "",
-      title: args.title ?? "Untitled",
-      duration: args.duration,
+      title: title ?? "Untitled",
+      duration: duration,
       createdAt: Date.now(),
     });
 
@@ -72,7 +76,7 @@ export const findRelevantTranscripts = query({
     const transcripts = await ctx.db
       .query("transcript")
       .withIndex("by_bord_org", (q) =>
-        q.eq("boardId", args.boardId).eq("orgId", args.orgId)
+        q.eq("boardId", args.boardId).eq("orgId", args.orgId),
       )
       .collect();
     if (transcripts.length === 0) return [];
@@ -88,4 +92,4 @@ export const findRelevantTranscripts = query({
   },
 });
 
-// probably i m planning to save multiple trnascript .. i have to figure out how i wll store these into multiple chunks
+// probably i m planning to save multiple trnascript .. i have to figure out how i will store these into multiple chunks
